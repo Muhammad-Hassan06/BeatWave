@@ -2,16 +2,22 @@ const userModel = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
+const JWT_SECRET = process.env.JWT_SECRET || "beatwave_default_jwt_secret_key_2026";
+
 const registerUser = async (req, res) => {
     try {
         const { username, email, password, role = "user" } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "Username, email, and password are required" });
+        }
 
         const isUserAlreadyExist = await userModel.findOne({
             $or: [{ username }, { email }]
         });
 
         if (isUserAlreadyExist) {
-            return res.status(409).json({ message: "User already exist" });
+            return res.status(409).json({ message: "User already exists" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -25,23 +31,34 @@ const registerUser = async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            process.env.JWT_SECRET
+            JWT_SECRET
         );
 
-        res.cookie("token", token);
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
         return res.status(201).json({
             message: "User registered successfully",
+            token,
             user: { id: user._id, username: user.username, role: user.role }
         });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Register Error:", error);
+        return res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
 
 const loginUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+
+        if ((!username && !email) || !password) {
+            return res.status(400).json({ message: "Username/email and password are required" });
+        }
 
         const user = await userModel.findOne({
             $or: [{ username }, { email }]
@@ -59,19 +76,33 @@ const loginUser = async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            process.env.JWT_SECRET
+            JWT_SECRET
         );
 
-        res.cookie("token", token);
-        return res.status(200).json({ message: "Logged in successfully" });
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return res.status(200).json({
+            message: "Logged in successfully",
+            token,
+            user: { id: user._id, username: user.username, role: user.role }
+        });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Login Error:", error);
+        return res.status(500).json({ message: error.message || "Internal server error" });
     }
 };
 
 const logoutUser = async (req, res) => {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none"
+    });
     return res.status(200).json({ message: "User logged out successfully" });
 };
 

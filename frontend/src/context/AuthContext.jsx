@@ -32,11 +32,12 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   const checkAuth = () => {
-    const token = getCookie("token");
+    const token = getCookie("token") || localStorage.getItem("spotify_token");
     if (!token) {
       setUser(null);
       localStorage.removeItem("spotify_username");
       localStorage.removeItem("spotify_role");
+      localStorage.removeItem("spotify_token");
     } else {
       const decoded = decodeToken(token);
       if (decoded) {
@@ -77,6 +78,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || "Invalid credentials");
       }
 
+      if (data.token) {
+        localStorage.setItem("spotify_token", data.token);
+      }
       localStorage.setItem("spotify_username", usernameOrEmail);
       
       setTimeout(() => {
@@ -106,6 +110,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || "Registration failed");
       }
 
+      if (data.token) {
+        localStorage.setItem("spotify_token", data.token);
+      }
       localStorage.setItem("spotify_username", username);
       
       setTimeout(() => {
@@ -131,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     localStorage.removeItem("spotify_username");
     localStorage.removeItem("spotify_role");
+    localStorage.removeItem("spotify_token");
     setUser(null);
   };
 
