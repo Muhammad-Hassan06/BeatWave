@@ -1,11 +1,21 @@
+const mongoose = require("mongoose");
 const userModel = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const connectDB = require("../db/db");
 
 const JWT_SECRET = process.env.JWT_SECRET || "beatwave_default_jwt_secret_key_2026";
 
+const ensureDbConnected = async () => {
+    if (mongoose.connection.readyState !== 1) {
+        await connectDB();
+    }
+};
+
 const registerUser = async (req, res) => {
     try {
+        await ensureDbConnected();
+
         const { username, email, password, role = "user" } = req.body;
 
         if (!username || !email || !password) {
@@ -54,6 +64,8 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     try {
+        await ensureDbConnected();
+
         const { username, email, password } = req.body;
 
         if ((!username && !email) || !password) {
