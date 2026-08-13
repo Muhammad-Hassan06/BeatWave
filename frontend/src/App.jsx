@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import { usePlayer } from "./context/PlayerContext";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://beatwave-yh9u.onrender.com";
+
 // Simple Inline SVG Icons to avoid npm package errors
 const Icons = {
   Logo: () => (
@@ -108,14 +110,14 @@ function App() {
     if (!user) return;
     try {
       // Get musics
-      const musicRes = await fetch("/api/music/");
+      const musicRes = await fetch(`${API_BASE_URL}/api/music/`, { credentials: "include" });
       if (musicRes.ok) {
         const musicData = await musicRes.json();
         setMusics(musicData.musics || []);
       }
       
       // Get albums
-      const albumRes = await fetch("/api/music/albums");
+      const albumRes = await fetch(`${API_BASE_URL}/api/music/albums`, { credentials: "include" });
       if (albumRes.ok) {
         const albumData = await albumRes.json();
         setAlbums(albumData.albums || []);
@@ -134,7 +136,7 @@ function App() {
     const fetchAlbumDetails = async () => {
       if (!selectedAlbumId) return;
       try {
-        const res = await fetch(`/api/music/albums/${selectedAlbumId}`);
+        const res = await fetch(`${API_BASE_URL}/api/music/albums/${selectedAlbumId}`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setSelectedAlbum(data.album);
@@ -186,8 +188,9 @@ function App() {
     formData.append("music", songFile);
 
     try {
-      const res = await fetch("/api/music/upload", {
+      const res = await fetch(`${API_BASE_URL}/api/music/upload`, {
         method: "POST",
+        credentials: "include",
         body: formData // Boundaries are set automatically
       });
 
@@ -225,9 +228,10 @@ function App() {
 
     setIsCreatingAlbum(true);
     try {
-      const res = await fetch("/api/music/album", {
+      const res = await fetch(`${API_BASE_URL}/api/music/album`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: albumTitle,
           musics: selectedSongsForAlbum

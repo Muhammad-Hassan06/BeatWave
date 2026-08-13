@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 
 const AuthContext = createContext();
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://beatwave-yh9u.onrender.com";
 
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -59,9 +60,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (usernameOrEmail, password) => {
     setError(null);
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           username: usernameOrEmail,
           email: usernameOrEmail,
@@ -75,11 +77,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || "Invalid credentials");
       }
 
-      // Since login API returns message and sets cookie, we retrieve the token from cookies.
-      // We will parse it to find the role. We'll store the username that the user used to log in.
       localStorage.setItem("spotify_username", usernameOrEmail);
       
-      // Delay slightly to ensure cookie is written
       setTimeout(() => {
         checkAuth();
       }, 100);
@@ -94,9 +93,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password, role) => {
     setError(null);
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, email, password, role }),
       });
 
@@ -121,7 +121,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch(`${API_BASE_URL}/api/auth/logout`, { 
+        method: "POST",
+        credentials: "include"
+      });
     } catch (err) {
       console.error("Logout request error", err);
     }
